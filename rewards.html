@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rewards Stamp Card</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f9f9f9; text-align: center; margin: 0; padding: 0; }
+        .card { background: white; padding: 20px; margin: 50px auto; box-shadow: 0px 4px 8px rgba(0,0,0,0.1); border-radius: 8px; max-width: 400px; }
+        h1 { color: #4CAF50; }
+        .progress { font-size: 18px; margin: 20px 0; }
+        .error { color: red; font-size: 16px; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h1>Your Rewards Stamp Card</h1>
+        <div id="userProgress" class="progress">Loading your stamps...</div>
+        <div id="errorMessage" class="error"></div>
+    </div>
+    <script>
+        // Fetch user's email from the URL
+        const urlParams = new URLSearchParams(window.location.search);
+        const userEmail = urlParams.get('user');
+
+        // Google Sheets CSV URL (replace with YOUR link)
+        const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRsmxM9NeS5Hfkb0Bu5K6lBc3YsnAL1ErKSOr0Fn6lFWcQNWG-PFjbFhQTxjuTKJywJmpDOlTu7YdO9/pub?output=csv";
+
+        // Function to fetch Google Sheets data
+        async function fetchSheetData() {
+            try {
+                const response = await fetch(SHEET_URL);
+                const data = await response.text();
+                processSheetData(data);
+            } catch (error) {
+                document.getElementById("errorMessage").innerText = "Failed to load data. Please try again later.";
+            }
+        }
+
+        // Process and display the data
+        function processSheetData(csvData) {
+            const rows = csvData.split("\n").map(row => row.split(","));
+            const emailIndex = rows[0].indexOf("Email");
+            const stampsIndex = rows[0].indexOf("Stamps Count");
+
+            let userFound = false;
+
+            rows.slice(1).forEach(row => {
+                if (row[emailIndex]?.trim() === userEmail) {
+                    userFound = true;
+                    const stamps = row[stampsIndex] || 0;
+                    document.getElementById("userProgress").innerText = `You have earned ${stamps} stamps!`;
+                }
+            });
+
+            if (!userFound) {
+                document.getElementById("errorMessage").innerText = "User not found. Check your link or contact the admin.";
+            }
+        }
+
+        // Start the process
+        if (userEmail) {
+            fetchSheetData();
+        } else {
+            document.getElementById("errorMessage").innerText = "No user specified. Check your link.";
+        }
+    </script>
+</body>
+</html>
